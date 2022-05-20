@@ -1,10 +1,18 @@
 import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/variable.css'
 import './index.css'
+import 'react-toastify/dist/ReactToastify.css'
+import App from './App'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+const container = document.getElementById('root') as HTMLDivElement;
+const root = createRoot(container);
+root.render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </React.StrictMode>,
 )
