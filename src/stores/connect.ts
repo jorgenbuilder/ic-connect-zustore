@@ -5,6 +5,7 @@ import { StoicIdentity } from 'ic-stoic-identity'
 import { Principal } from '@dfinity/principal'
 import { ActorSubclass, HttpAgent } from '@dfinity/agent'
 import { IDL } from '@dfinity/candid'
+import { AuthClient, AuthClientLoginOptions } from '@dfinity/auth-client'
 
 
 export const icConf = {
@@ -17,7 +18,7 @@ export const host = `${icConf.protocol}://${icConf.host}`;
 export const defaultAgent = new HttpAgent({ host });
 export const whitelist = (import.meta.env.DAPP_WHITELIST as string).split(',');
 
-export type Wallet = 'plug' | 'stoic' | 'earth' | 'ii';
+export type Wallet = 'plug' | 'stoic' | 'earth' | 'ii' | 'nfid';
 
 export interface ICP8s {
     e8s : number;
@@ -35,8 +36,12 @@ export interface ConnectStore {
     idempotentConnect: () => null | (() => void);
     plugConnect: () => void;
     stoicConnect: () => void;
+    iiConnect: () => void;
+    nfidConnect: () => void;
     plugReconnect: () => Promise<boolean>;
     stoicReconnect: () => Promise<boolean>;
+    iiReconnect: () => Promise<boolean>;
+    nfidReconnect: () => Promise<boolean>;
 
     walletBalance?  : ICP8s;
     walletBalanceDisplay: () => number | undefined
@@ -53,7 +58,7 @@ export const useConnect = create<ConnectStore>((set, get) => ({
     connected: false,
     connecting: false,
 
-    // Run once on startup should be called from the root store's init function.
+    // Run once on startup, should be called from the root store's init function.
     initialized: false,
     initConnect () {
 
@@ -138,6 +143,68 @@ export const useConnect = create<ConnectStore>((set, get) => ({
         postConnect();
     },
 
+    // Request connection to ii.
+    async iiConnect () {
+        const authClient = await AuthClient.create();
+        const { idempotentConnect, postConnect } = get();
+
+        // Ensure singular connection attempt.
+        const complete = idempotentConnect();
+        if (complete === null) return;
+
+        await authClient.login({
+            onSuccess: () => {
+                const identity = authClient.getIdentity();
+                const principal = identity.getPrincipal();
+                const agent = new HttpAgent({
+                    identity,
+                    host,
+                });
+                complete();
+                postConnect();
+                set({ connected: true, principal, agent, wallet: 'ii' })
+            },
+            onError: (error) => {
+                alert(`Failed to connect ii: ${error}`);
+                complete();
+                console.error(error);
+            },
+            identityProvider: 'https://identity.ic0.app/#authorize',
+            // ...authClientOptions,
+        })
+    },
+    
+    // Request connection to nfid.
+    async nfidConnect () {
+        const authClient = await AuthClient.create();
+        const { idempotentConnect, postConnect } = get();
+
+        // Ensure singular connection attempt.
+        const complete = idempotentConnect();
+        if (complete === null) return;
+
+        await authClient.login({
+            onSuccess: () => {
+                const identity = authClient.getIdentity();
+                const principal = identity.getPrincipal();
+                const agent = new HttpAgent({
+                    identity,
+                    host,
+                });
+                complete();
+                postConnect();
+                set({ connected: true, principal, agent, wallet: 'nfid' })
+            },
+            onError: (error) => {
+                alert(`Failed to connect nfid: ${error}`);
+                complete();
+                console.error(error);
+            },
+            identityProvider: import.meta.env.DAPP_NFID_PROVIDER,
+            // ...authClientOptions,
+        })
+    },
+
     // Attempt to restore a live connection to user's plug wallet.
     async plugReconnect () {
         const { postConnect } = get();
@@ -166,6 +233,16 @@ export const useConnect = create<ConnectStore>((set, get) => ({
             stoicConnect();
             return true;
         };
+        return false;
+    },
+
+    // Attempt to restore a live connection to user's ii.
+    async iiReconnect () {
+        return false;
+    },
+
+    // Attempt to restore a live connection to user's ii.
+    async nfidReconnect () {
         return false;
     },
 

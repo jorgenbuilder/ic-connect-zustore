@@ -10,7 +10,7 @@ export interface Message {
 interface MessagesStore {
 
     initialized: boolean;
-    init: () => void;
+    initMessage: () => void;
 
     messages: { [key: number] : Message };
     pushMessage: (m : Message) => void;
@@ -22,7 +22,7 @@ interface MessagesStore {
 const useMessageStore = create<MessagesStore>((set, get) => ({
 
     initialized: false,
-    init () {
+    initMessage () {
         const { initialized } = get();
         if (initialized) return;
 

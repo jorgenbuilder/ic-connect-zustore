@@ -21,6 +21,8 @@ export default function HomePage (props : Props) {
             : <>
                 <Button disabled={connect.connecting} onClick={() => connect.plugConnect()}>Connect Plug</Button>
                 <Button disabled={connect.connecting} onClick={() => connect.stoicConnect()}>Connect Stoic</Button>
+                <Button disabled={connect.connecting} onClick={() => connect.iiConnect()}>Connect Internet Identity</Button>
+                <Button disabled={connect.connecting} onClick={() => connect.nfidConnect()}>Connect NFID</Button>
             </>
         }
     </div>
