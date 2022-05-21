@@ -37,9 +37,11 @@ export interface ConnectStore {
     plugConnect: () => void;
     stoicConnect: () => void;
     iiConnect: () => void;
+    nfidConnect: () => void;
     plugReconnect: () => Promise<boolean>;
     stoicReconnect: () => Promise<boolean>;
     iiReconnect: () => Promise<boolean>;
+    nfidReconnect: () => Promise<boolean>;
 
     walletBalance?  : ICP8s;
     walletBalanceDisplay: () => number | undefined
@@ -159,6 +161,7 @@ export const useConnect = create<ConnectStore>((set, get) => ({
                     host,
                 });
                 complete();
+                postConnect();
                 set({ connected: true, principal, agent, wallet: 'ii' })
             },
             onError: (error) => {
@@ -167,6 +170,37 @@ export const useConnect = create<ConnectStore>((set, get) => ({
                 console.error(error);
             },
             identityProvider: 'https://identity.ic0.app/#authorize',
+            // ...authClientOptions,
+        })
+    },
+    
+    // Request connection to nfid.
+    async nfidConnect () {
+        const authClient = await AuthClient.create();
+        const { idempotentConnect, postConnect } = get();
+
+        // Ensure singular connection attempt.
+        const complete = idempotentConnect();
+        if (complete === null) return;
+
+        await authClient.login({
+            onSuccess: () => {
+                const identity = authClient.getIdentity();
+                const principal = identity.getPrincipal();
+                const agent = new HttpAgent({
+                    identity,
+                    host,
+                });
+                complete();
+                postConnect();
+                set({ connected: true, principal, agent, wallet: 'nfid' })
+            },
+            onError: (error) => {
+                alert(`Failed to connect nfid: ${error}`);
+                complete();
+                console.error(error);
+            },
+            identityProvider: import.meta.env.DAPP_NFID_PROVIDER,
             // ...authClientOptions,
         })
     },
@@ -204,6 +238,11 @@ export const useConnect = create<ConnectStore>((set, get) => ({
 
     // Attempt to restore a live connection to user's ii.
     async iiReconnect () {
+        return false;
+    },
+
+    // Attempt to restore a live connection to user's ii.
+    async nfidReconnect () {
         return false;
     },
 
