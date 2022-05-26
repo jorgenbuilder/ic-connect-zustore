@@ -200,8 +200,8 @@ export const useConnect = create<ConnectStore>((set, get) => ({
                 complete();
                 console.error(error);
             },
-            identityProvider: import.meta.env.DAPP_NFID_PROVIDER,
-            // ...authClientOptions,
+            identityProvider: `${import.meta.env.DAPP_NFID_PROVIDER}?applicationName=My Sweet App&applicationLogo=https://logo.clearbit.com/clearbit.com`,
+            windowOpenerFeatures: `toolbar=0,location=0,menubar=0,width=400,height=600`
         })
     },
 
