@@ -60,19 +60,22 @@ export const useConnect = create<ConnectStore>((set, get) => ({
 
     // Run once on startup, should be called from the root store's init function.
     initialized: false,
-    initConnect () {
+    async initConnect () {
 
-        const { initialized, plugReconnect, stoicReconnect, } = get();
+        const { initialized, plugReconnect, stoicReconnect, iiReconnect, nfidReconnect } = get();
         if (initialized) return;
 
         // Attempt to reconnect to wallets
-        try {
-            plugReconnect()
-            .then(r => {
-                if (!r) stoicReconnect()
-            });
-        } catch (e) {
-            console.error(e);
+        const methods = [plugReconnect, stoicReconnect, iiReconnect, nfidReconnect];
+        while (methods.length > 0) {
+            const method = methods.pop();
+            if (!method) return;
+            try {
+                const r = await method()
+                if (r) break;
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         set({ initialized : true });
